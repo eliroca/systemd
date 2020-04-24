@@ -2,6 +2,7 @@
 set -e
 TEST_DESCRIPTION="Sysuser-related tests"
 
+export TEST_BASE_DIR=/var/opt/systemd-tests/test
 . $TEST_BASE_DIR/test-functions
 
 test_setup() {
@@ -22,8 +23,8 @@ preprocess() {
     # see meson.build how to extract this. gcc -E was used before to
     # get this value from config.h, however the autopkgtest fails with
     # it
-    SYSTEM_UID_MAX=$(awk 'BEGIN { uid=999 } /^\s*SYS_UID_MAX\s+/ { uid=$2 } END { print uid }' /etc/login.defs)
-    SYSTEM_GID_MAX=$(awk 'BEGIN { gid=999 } /^\s*SYS_GID_MAX\s+/ { gid=$2 } END { print gid }' /etc/login.defs)
+    SYSTEM_UID_MAX=$(awk 'BEGIN { uid=999 } /^\s*SYS_UID_MAX\s+/ { uid=$2 } END { print uid }' /usr/etc/login.defs)
+    SYSTEM_GID_MAX=$(awk 'BEGIN { gid=999 } /^\s*SYS_GID_MAX\s+/ { gid=$2 } END { print gid }' /usr/etc/login.defs)
 
     # we can't rely on config.h to get the nologin path, as autopkgtest
     # uses pre-compiled binaries, so extract it from the systemd-sysusers
@@ -124,6 +125,16 @@ test_run() {
             exit 1
         fi
     done
+
+    systemctl --state=failed --no-legend --no-pager > /failed
+    echo SUSEtest OK > /testok
+}
+
+test_cleanup() {
+    _test_cleanup
+    [[ -e /testok ]] && rm /testok
+    [[ -e /failed ]] && rm /failed
+    return 0
 }
 
 do_test "$@"
