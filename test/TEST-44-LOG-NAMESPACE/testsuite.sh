@@ -14,6 +14,6 @@ grep "hello world" /tmp/hello-world
 
 systemd-analyze log-level info
 
-echo OK > /testok
+echo SUSEtest OK > /testok
 
 exit 0
