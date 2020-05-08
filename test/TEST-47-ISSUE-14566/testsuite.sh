@@ -3,7 +3,7 @@ set -ex
 set -o pipefail
 
 systemd-analyze log-level debug
-systemd-analyze log-target console
+systemd-analyze log-target kmsg
 
 systemctl start issue_14566_test
 sleep 1
@@ -20,6 +20,6 @@ ps -p "$leaked_pid" && exit 42
 
 systemd-analyze log-level info
 
-echo OK > /testok
+echo SUSEtest OK > /testok
 
 exit 0
