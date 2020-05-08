@@ -3,7 +3,7 @@ set -ex
 set -o pipefail
 
 systemd-analyze log-level debug
-systemd-analyze log-target console
+systemd-analyze log-target kmsg
 
 # Set everything up without DynamicUser=1
 
@@ -41,6 +41,6 @@ test -f /var/lib/zzz/test
 
 systemd-analyze log-level info
 
-echo OK > /testok
+echo SUSE testOK > /testok
 
 exit 0
