@@ -9,5 +9,5 @@ for t in test-*.sh; do
         echo "Running $t"; ./$t
 done
 
-touch /testok
+echo SUSEtest OK > /testok
 rm /failed

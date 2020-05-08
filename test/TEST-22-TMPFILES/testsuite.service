@@ -8,5 +8,5 @@ Wants=getty-pre.target
 WorkingDirectory=/testsuite
 ExecStart=/testsuite/run-tmpfiles-tests.sh
 Type=oneshot
-StandardOutput=tty
-StandardError=tty
+StandardOutput=kmsg
+StandardError=kmsg
