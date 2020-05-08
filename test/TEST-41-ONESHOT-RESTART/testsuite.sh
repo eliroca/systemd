@@ -6,7 +6,7 @@ set -o pipefail
 MAX_SECS=60
 
 systemd-analyze log-level debug
-systemd-analyze log-target console
+systemd-analyze log-target kmsg
 
 # test one: Restart=on-failure should restart the service
 ! systemd-run --unit=one -p Type=oneshot -p Restart=on-failure /bin/bash -c "exit 1"
@@ -44,6 +44,6 @@ fi
 
 systemd-analyze log-level info
 
-echo OK > /testok
+echo SUSE testOK > /testok
 
 exit 0
