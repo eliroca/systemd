@@ -106,4 +106,4 @@ systemctl kill --signal=SIGKILL systemd-journald
 sleep 3
 [[ ! -f "/i-lose-my-logs" ]]
 
-touch /testok
+echo SUSEtest OK > /testok
