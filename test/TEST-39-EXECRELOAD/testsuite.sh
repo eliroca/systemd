@@ -4,7 +4,7 @@ set -ex
 set -o pipefail
 
 systemd-analyze log-level debug
-systemd-analyze log-target console
+systemd-analyze log-target kmsg
 
 export SYSTEMD_PAGER=
 SERVICE_PATH="$(mktemp /etc/systemd/system/execreloadXXX.service)"
@@ -59,6 +59,6 @@ systemctl stop $SERVICE_NAME
 
 systemd-analyze log-level info
 
-echo OK > /testok
+echo SUSE testOK > /testok
 
 exit 0
