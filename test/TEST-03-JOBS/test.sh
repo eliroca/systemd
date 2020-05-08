@@ -3,6 +3,7 @@ set -e
 TEST_DESCRIPTION="Job-related tests"
 TEST_NO_QEMU=1
 
+export TEST_BASE_DIR=/var/opt/systemd-tests/test
 . $TEST_BASE_DIR/test-functions
 
 test_setup() {
@@ -35,6 +36,14 @@ EOF
         setup_testsuite
     )
     setup_nspawn_root
+}
+
+test_cleanup() {
+    _test_cleanup
+    for file in $(ls /testok* /failed* 2>/dev/null); do
+      rm $file
+    done
+    return 0
 }
 
 do_test "$@"
