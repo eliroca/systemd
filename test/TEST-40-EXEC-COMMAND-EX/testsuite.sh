@@ -3,7 +3,7 @@ set -ex
 set -o pipefail
 
 systemd-analyze log-level debug
-systemd-analyze log-target console
+systemd-analyze log-target kmsg
 
 declare -A property
 
@@ -41,6 +41,6 @@ done
 
 systemd-analyze log-level info
 
-echo OK > /testok
+echo SUSE testOK > /testok
 
 exit 0
