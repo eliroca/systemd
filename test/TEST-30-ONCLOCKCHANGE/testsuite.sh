@@ -3,7 +3,9 @@ set -ex
 set -o pipefail
 
 systemd-analyze log-level debug
-systemd-analyze log-target console
+systemd-analyze log-target kmsg
+
+timedatectl set-ntp false
 
 systemctl disable --now systemd-timesyncd.service
 
@@ -26,6 +28,8 @@ while ! test -f /tmp/clock-changed ; do sleep .5 ; done
 
 systemd-analyze log-level info
 
-echo OK > /testok
+timedatectl set-ntp true
+
+echo SUSEtest OK > /testok
 
 exit 0
