@@ -12,4 +12,4 @@ set -o pipefail
 [[ "$(ulimit -n -S)" = "10000" ]]
 [[ "$(ulimit -n -H)" = "16384" ]]
 
-touch /testok
+echo SUSEtest OK > /testok
