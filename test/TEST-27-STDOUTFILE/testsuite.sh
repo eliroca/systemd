@@ -3,7 +3,7 @@ set -ex
 set -o pipefail
 
 systemd-analyze log-level debug
-systemd-analyze log-target console
+systemd-analyze log-target kmsg
 
 systemd-run --wait --unit=one \
             -p StandardOutput=file:/tmp/stdout \
@@ -45,6 +45,6 @@ EOF
 
 systemd-analyze log-level info
 
-echo OK > /testok
+echo SUSEtest OK > /testok
 
 exit 0
