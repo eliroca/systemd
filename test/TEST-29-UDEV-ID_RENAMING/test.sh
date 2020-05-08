@@ -3,21 +3,16 @@ set -e
 TEST_DESCRIPTION="UDEV ID_RENAMING property"
 TEST_NO_NSPAWN=1
 
+export TEST_BASE_DIR=/var/opt/systemd-tests/test
 . $TEST_BASE_DIR/test-functions
-QEMU_TIMEOUT=300
 
 test_setup() {
-    create_empty_image_rootdir
-
     (
         LOG_LEVEL=5
-        eval $(udevadm info --export --query=env --name=${LOOPDEV}p2)
-
-        setup_basic_environment
         mask_supporting_services
 
         # setup the testsuite service
-        cat >$initdir/etc/systemd/system/testsuite.service <<EOF
+        cat >/etc/systemd/system/testsuite.service <<EOF
 [Unit]
 Description=Testsuite service
 
@@ -25,10 +20,27 @@ Description=Testsuite service
 ExecStart=/bin/bash -x /testsuite.sh
 Type=oneshot
 EOF
-        cp testsuite.sh $initdir/
-
-        setup_testsuite
+        cp testsuite.sh /
     )
+}
+
+test_run() {
+    ret=1
+    systemctl daemon-reload
+    systemctl start testsuite.service || return 1
+    test -s /failed && ret=$(($ret+1))
+    [[ -e /testok ]] && ret=0
+    return $ret
+}
+
+test_cleanup() {
+    _test_cleanup
+    rm -f /testsuite.sh
+    rm -f /etc/systemd/system/testsuite.service
+    for file in $(ls /testok* /failed* 2>/dev/null); do
+      rm $file
+    done
+    return 0
 }
 
 do_test "$@"
