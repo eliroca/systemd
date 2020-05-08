@@ -11,7 +11,7 @@ set -o pipefail
 if test -f /sys/fs/cgroup/system.slice/testsuite.service/memory.oom.group ; then
 
     systemd-analyze log-level debug
-    systemd-analyze log-target console
+    systemd-analyze log-target kmsg
 
     # Run a service that is guaranteed to be the first candidate for OOM killing
     systemd-run --unit=oomtest.service -p Type=exec -p OOMScoreAdjust=1000 -p OOMPolicy=stop -p MemoryAccounting=yes /bin/sleep infinity
@@ -30,8 +30,10 @@ if test -f /sys/fs/cgroup/system.slice/testsuite.service/memory.oom.group ; then
     test "$RESULT" = "oom-kill"
 
     systemd-analyze log-level info
+else
+    echo "Skipping test because 'memory.oom.group' cgroupfs attribute doesn't exist at '/sys/fs/cgroup/system.slice/testsuite.service'"
 fi
 
-echo OK > /testok
+echo SUSEtest OK > /testok
 
 exit 0
