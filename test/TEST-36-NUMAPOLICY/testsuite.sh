@@ -336,6 +336,6 @@ systemctl daemon-reload
 
 systemd-analyze log-level info
 
-echo OK > /testok
+echo SUSEtest OK > /testok
 
 exit 0
