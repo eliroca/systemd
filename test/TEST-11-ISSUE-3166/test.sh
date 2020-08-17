@@ -3,31 +3,26 @@ set -e
 TEST_DESCRIPTION="https://github.com/systemd/systemd/issues/3166"
 TEST_NO_NSPAWN=1
 
+export TEST_BASE_DIR=/var/opt/systemd-tests/test
 . $TEST_BASE_DIR/test-functions
 
 test_setup() {
-    create_empty_image_rootdir
-
-    # Create what will eventually be our root filesystem onto an overlay
     (
         LOG_LEVEL=5
-        eval $(udevadm info --export --query=env --name=${LOOPDEV}p2)
-
-        setup_basic_environment
         mask_supporting_services
-        dracut_install false touch
 
         # setup the testsuite service
-        cat >$initdir/etc/systemd/system/testsuite.service <<EOF
+        cat >/etc/systemd/system/testsuite.service <<EOF
 [Unit]
 Description=Testsuite service
 
 [Service]
 ExecStart=/test-fail-on-restart.sh
+ExecStartPost=/bin/sh -x -c 'systemctl status fail-on-restart.service > /failed; echo SUSEtest OK > /testok'
 Type=oneshot
 EOF
 
-        cat >$initdir/etc/systemd/system/fail-on-restart.service <<EOF
+        cat >/etc/systemd/system/fail-on-restart.service <<EOF
 [Unit]
 Description=Fail on restart
 StartLimitIntervalSec=1m
@@ -40,7 +35,7 @@ Restart=always
 EOF
 
 
-        cat >$initdir/test-fail-on-restart.sh <<'EOF'
+        cat >/test-fail-on-restart.sh <<'EOF'
 #!/usr/bin/env bash
 set -x
 
@@ -54,9 +49,28 @@ systemctl is-failed fail-on-restart.service || exit 1
 touch /testok
 EOF
 
-        chmod 0755 $initdir/test-fail-on-restart.sh
-        setup_testsuite
+        chmod 0755 /test-fail-on-restart.sh
     )
+}
+
+test_run() {
+    systemctl daemon-reload
+    systemctl start testsuite.service || return 1
+    ret=1
+    test -s /failed && ret=$(($ret+1))
+    [[ -e /testok ]] && ret=0
+    return $ret
+}
+
+test_cleanup() {
+    _test_cleanup
+    for unit in testsuite.service fail-on-restart.service; do
+        rm -f /etc/systemd/system/$unit
+    done
+    rm -f /test-fail-on-restart.sh
+    [[ -e /testok ]] && rm /testok
+    [[ -e /failed ]] && rm /failed
+    return 0
 }
 
 do_test "$@"
