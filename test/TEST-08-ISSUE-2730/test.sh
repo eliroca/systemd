@@ -3,37 +3,31 @@ set -e
 TEST_DESCRIPTION="https://github.com/systemd/systemd/issues/2730"
 TEST_NO_NSPAWN=1
 
+export TEST_BASE_DIR=/var/opt/systemd-tests/test
 . $TEST_BASE_DIR/test-functions
-QEMU_TIMEOUT=300
-FSTYPE=ext4
 
 test_setup() {
-    create_empty_image_rootdir
-
-    # Create what will eventually be our root filesystem onto an overlay
     (
         LOG_LEVEL=5
-        eval $(udevadm info --export --query=env --name=${LOOPDEV}p2)
-
-        setup_basic_environment
 
         # setup the testsuite service
-        cat >$initdir/etc/systemd/system/testsuite.service <<EOF
+        cat >/etc/systemd/system/testsuite.service <<EOF
 [Unit]
 Description=Testsuite service
 
 [Service]
-ExecStart=/bin/sh -x -c 'mount -o remount,rw /dev/sda1 && echo OK > /testok; systemctl poweroff'
+ExecStart=/bin/sh -x -c 'mount -o remount,rw /dev/vda2 && echo SUSEtest OK > /testok'
+ExecStartPost=/bin/sh -x -c 'systemctl --state=failed --no-pager > /failed'
 Type=oneshot
 EOF
 
-    rm $initdir/etc/fstab
-    cat >$initdir/etc/systemd/system/-.mount <<EOF
+    mv /etc/fstab /etc-fstab
+    cat >/etc/systemd/system/-.mount <<EOF
 [Unit]
 Before=local-fs.target
 
 [Mount]
-What=/dev/sda1
+What=/dev/vda2
 Where=/
 Type=ext4
 Options=errors=remount-ro,noatime
@@ -43,7 +37,7 @@ WantedBy=local-fs.target
 Alias=root.mount
 EOF
 
-    cat >$initdir/etc/systemd/system/systemd-remount-fs.service <<EOF
+    cat >/etc/systemd/system/systemd-remount-fs.service <<EOF
 [Unit]
 DefaultDependencies=no
 Conflicts=shutdown.target
@@ -57,14 +51,32 @@ RemainAfterExit=yes
 ExecStart=/bin/systemctl reload /
 EOF
 
-        setup_testsuite
     )
 
-    ln -s /etc/systemd/system/-.mount $initdir/etc/systemd/system/root.mount
-    mkdir -p $initdir/etc/systemd/system/local-fs.target.wants
-    ln -s /etc/systemd/system/-.mount $initdir/etc/systemd/system/local-fs.target.wants/-.mount
+    ln -s /etc/systemd/system/-.mount /etc/systemd/system/root.mount
+    mkdir -p /etc/systemd/system/local-fs.target.wants
+    ln -s /etc/systemd/system/-.mount /etc/systemd/system/local-fs.target.wants/-.mount
+}
 
-    mask_supporting_services
+test_run() {
+    systemctl daemon-reload
+    systemctl start testsuite.service || return 1
+    ret=1
+    test -s /failed && ret=$(($ret+1))
+    [[ -e /testok ]] && ret=0
+    return $ret
+}
+
+test_cleanup() {
+    _test_cleanup
+    for unit in root.mount -.mount systemd-remount-fs.service testsuite.service; do
+        rm -f /etc/systemd/system/$unit
+    done
+    rm -rf /etc/systemd/system/local-fs.target.wants
+    [[ -e /etc-fstab ]] && mv /etc-fstab /etc/fstab
+    [[ -e /testok ]] && rm /testok
+    [[ -e /failed ]] && rm /failed
+    return 0
 }
 
 do_test "$@"
